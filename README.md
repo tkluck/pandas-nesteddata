@@ -74,8 +74,8 @@ INSTALLATION
 
 To install this module type the following:
 
-   python setup.py
-   sudo python setup.py install
+    python setup.py
+    sudo python setup.py install
 
 DEPENDENCIES
 ------------
