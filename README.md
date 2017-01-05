@@ -4,7 +4,7 @@ pandas-nesteddata version 0.1
 This module transforms hierarchical data (nested arrays/hashes) to
 a pandas DataFrame according to a compact, readable, user-specified pattern.
 
-For example, the pattern '.<index>.*' transforms a data structure
+For example, the pattern `.<index>.*` transforms a data structure
 of the form
 
     >>> data = [{ 'a': 1, 'b': 2 }, { 'a': 3, 'b': 4 }]
@@ -23,13 +23,13 @@ Or, in code:
     1,2,0
     3,4,1
 
-The pattern '.*.*' applied to the same data gives the output
+The pattern `.*.*` applied to the same data gives the output
 
     >>> to_dataframe('.*.*', data)
     0_a,0_b,1_a,1_b
     1,2,3,4
 
-The pattern '.*.<key>' gives the output
+The pattern `.*.<key>` gives the output
 
     >>> to_dataframe('.*.<key>', data)
     0,1,key
