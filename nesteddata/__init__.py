@@ -1,6 +1,6 @@
 from collections import defaultdict
 import json
-#import pandas as pd
+import pandas as pd
 
 def itemize(data):
     if hasattr(data, 'items'):
@@ -89,7 +89,30 @@ class Transformer(object):
             column_tuple = column_name_prefix if column_name_prefix else [default_column_name]
             self._data_matrix[tuple(index_prefix)][tuple(column_name_prefix)] = data
 
+    def dataframe(self):
+        data_matrix = self._data_matrix
+        columns = sorted(set(col for row in data_matrix.values() for col in row.keys()))
+        records = [
+            ix + tuple( column_data.get(col, None) for col in columns )
+            for ix, column_data in data_matrix.items()
+        ]
+        index_column_names = self._index_column_names
+        data_column_names = tuple("_".join(str(c) for c in col) for col in columns)
+        all_column_names = index_column_names + data_column_names
+
+        if index_column_names:
+            return pd.DataFrame.from_records(
+                records,
+                index=index_column_names,
+                columns=all_column_names,
+            )
+        else:
+            return pd.DataFrame.from_records(
+                records,
+                columns=all_column_names,
+            )
+
 def to_dataframe(pattern, data, column_name=None):
     t =  Transformer(pattern, column_name)
     t.add_data(data)
-    print(t._data_matrix)
+    return t.dataframe()

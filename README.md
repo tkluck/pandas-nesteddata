@@ -11,30 +11,33 @@ of the form
 
 to the DataFrame
 
-    a,b,index
-    1,2,0
-    3,4,1
+           a  b
+    index
+    0      1  2
+    1      3  4
 
 Or, in code:
 
-    >>> from pandas.nesteddata import to_dataframe
+    >>> from nesteddata import to_dataframe
     >>> to_dataframe('.<index>.*', data)
-    a,b,index
-    1,2,0
-    3,4,1
+           a  b
+    index      
+    0      1  2
+    1      3  4
 
 The pattern `.*.*` applied to the same data gives the output
 
     >>> to_dataframe('.*.*', data)
-    0_a,0_b,1_a,1_b
-    1,2,3,4
+       0_a  0_b  1_a  1_b
+    0    1    2    3    4
 
 The pattern `.*.<key>` gives the output
 
     >>> to_dataframe('.*.<key>', data)
-    0,1,key
-    1,3,a
-    2,4,b
+         0  1
+    key      
+    a    1  3
+    b    2  4
 
 It is hoped that the pattern specification is sufficiently powerful for this
 module to replace a lot of simple boiler-plate data transformations.
