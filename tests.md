@@ -34,11 +34,15 @@ Let's define a few nested structures:
 
 And test a few patterns:
 
+First primary key, then column glob:
+
     >>> to_dataframe('.calculus.<name>.*.year', data=data)
              birth  death
     name                 
     Leibniz   1646   1716
     Newton    1642   1726
+
+First  column glob, then primary key:
 
     >>> to_dataframe('.calculus.*.<event>.year', data=data)
            Leibniz  Newton
@@ -46,27 +50,39 @@ And test a few patterns:
     birth     1646    1642
     death     1716    1726
 
+PK + double column glob:
+
     >>> to_dataframe('.calculus.<name>.*.*', data=data)
              birth_month  birth_year  death_month  death_year
     name                                                     
     Leibniz            6        1646           11        1716
     Newton            12        1642            3        1726
 
+Not a nested structure, just a scalar value:
+
     >>> to_dataframe('.', data=value)
     <BLANKLINE>
     0  42
+
+Same, but with a colum name as an extra argument:
 
     >>> to_dataframe('.', column_name="value", data=value)
        value
     0     42
 
+Single value in data structure:
+
     >>> to_dataframe('.calculus.Newton.birth.year', data=data)
     <BLANKLINE>
     0  1642
 
+Nested structure as the value itself:
+
     >>> to_dataframe('.', data=empty_data)
     <BLANKLINE>
     0  {}
+
+Non-existent data being referenced:
 
     >>> to_dataframe('.nonexistent_key', data=empty_data)
     Empty DataFrame
