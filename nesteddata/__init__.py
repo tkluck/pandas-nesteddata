@@ -42,6 +42,12 @@ class Transformer(object):
                     elif part[0] == '{' and part[-1] == '}':
                         column_names = part[1:-1].split(',')
                         parsed_chunk.append(('columns', column_names))
+                    elif part[0] == '[' and part[-1] == ']':
+                        try:
+                            integer_value = int(part[1:-1])
+                        except TypeError:
+                            raise RuntimeError("Invalid pattern chunk: %s is not an integer" % part)
+                        parsed_chunk.append(('literal_key', integer_value))
                     else:
                         parsed_chunk.append(('literal_key', part))
             index_columns.add(tuple(item[1] for item in parsed_chunk if item[0] == 'index'))
@@ -82,8 +88,10 @@ class Transformer(object):
                     columns = cur_item[1]
                     if isinstance(data, (dict, list, tuple)):
                         for column in columns:
-                            if column in data:
+                            try:
                                 self._recurse_pattern(data[column], next_chunk, column_name_prefix + [column], index_prefix, default_column_name)
+                            except (IndexError, KeyError):
+                                pass
                 elif what == 'index':
                     index_name = cur_item[1]
                     for k, v in itemize(data):
@@ -91,8 +99,12 @@ class Transformer(object):
                 elif what == 'literal_key':
                     key_name = cur_item[1]
                     if isinstance(data, (dict, list, tuple)):
-                        if key_name in data:
+                        try:
                             self._recurse_pattern(data[key_name], next_chunk, column_name_prefix, index_prefix, default_column_name)
+                        except (IndexError, KeyError):
+                            pass
+                else:
+                    raise AssertionError("Unknown chunk type")
             except Exception as ex:
                 msg = "While applying pattern chunk %s: %s" % (cur_item, ex.args[0])
                 ex.args = (msg,) + ex.args[1:]

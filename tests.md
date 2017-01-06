@@ -156,3 +156,9 @@ And test a few patterns:
     1  3   4  5
     2  6 NaN  7
 
+Numeric literal key:
+
+    >>> to_dataframe('.[1]', column_name="second entry", data=['a', 'b', 'c'])
+      second entry
+    0            b
+
