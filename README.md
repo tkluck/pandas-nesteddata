@@ -87,7 +87,7 @@ This module requires these other modules and libraries:
 COPYRIGHT AND LICENCE
 ---------------------
 
-Copyright (C) 2016 by Timo Kluck
+Copyright (C) 2017 by Timo Kluck
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the General Public License, version 3 or later.
