@@ -70,6 +70,39 @@ separated by spaces. In that case, all the paths need to have the same primary
 key (that is, the same set of names in `<...>`). Rows will be formed by joining
 the columns resulting from the different paths.
 
+ESCAPING SPECIAL CHARACTERS
+---------------------------
+
+The characters `<>{}*[].` have a special meaning and as such, cannot be part
+of a literal key. More precisely, if they are in such position that they can
+be interpreted with their special meaning, this takes precedence.
+
+Allowing a way to escape these special characters will be part of a future
+release. For now, look at 'Building the pattern from data structures' below.
+
+BUILDING THE PATTERN FROM DATA STRUCTURES
+-----------------------------------------
+
+As an alternative to passing the pattern as a string that needs to be parsed,
+it is also possible to pass the pattern as a data structure. For example, the
+pattern
+
+    .*.<key>
+
+can also be represented as
+
+    >>> from nesteddata import Glob, Index
+    >>> Glob() + Index('key')
+    Glob() + Index('key')
+
+The constructor functions are:
+
+- `Index(name)`
+- `Glob()`
+- `Columns(*column_names)`
+- `Literal(key)`
+- `Join(*chunks)`
+
 
 INSTALLATION
 ------------

@@ -2,6 +2,52 @@ from collections import defaultdict
 import json
 import pandas as pd
 
+class PatternChunk(object):
+    def __init__(self, items):
+        self._items = items
+    def __add__(left, right):
+        return PatternChunk(left._items + right._items)
+    def __repr__(self):
+        return " + ".join(repr(i) for i in self._items)
+    def __iter__(self):
+        return iter(self._items)
+
+class Index(PatternChunk):
+    def __init__(self, name):
+        PatternChunk.__init__(self, [self])
+        self._name = name
+    def __repr__(self):
+        return "Index(%s)" % repr(self._name)
+
+class Glob(PatternChunk):
+    def __init__(self):
+        PatternChunk.__init__(self, [self])
+    def __repr__(self):
+        return "Glob()"
+
+class Columns(PatternChunk):
+    def __init__(self, *column_names):
+        PatternChunk.__init__(self, [self])
+        self._column_names = tuple(column_names)
+    def __repr__(self):
+        return "Columns(%s)" % ",".join(repr(c) for c in self._column_names)
+
+class Literal(PatternChunk):
+    def __init__(self, key):
+        PatternChunk.__init__(self, [self])
+        self._key = key
+    def __repr__(self):
+        return "Literal(%s)" % repr(self._key)
+
+class Join(object):
+    def __init__(self, *chunks):
+        self._chunks = tuple(chunks)
+    def __repr__(self):
+        return "Join(%s)" % ",".join(repr(c) for c in self._chunks)
+    def __iter__(self):
+        return iter(self._chunks)
+
+
 def itemize(data):
     if hasattr(data, 'items'):
         return data.items()
@@ -32,28 +78,28 @@ class Transformer(object):
             if dot != '.':
                 raise RuntimeError("Invalid pattern chunk: <%s>" % chunk)
 
-            parsed_chunk = []
+            parsed_chunk = PatternChunk([])
             if rest:
                 for part in rest.split('.'):
                     if part == '*':
-                        parsed_chunk.append(('glob',))
+                        parsed_chunk += Glob()
                     elif part[0] == '<' and part[-1] == '>':
-                        parsed_chunk.append(('index', part[1:-1]))
+                        parsed_chunk += Index(part[1:-1])
                     elif part[0] == '{' and part[-1] == '}':
                         column_names = part[1:-1].split(',')
-                        parsed_chunk.append(('columns', column_names))
+                        parsed_chunk += Columns(*column_names)
                     elif part[0] == '[' and part[-1] == ']':
                         try:
                             integer_value = int(part[1:-1])
                         except TypeError:
                             raise RuntimeError("Invalid pattern chunk: %s is not an integer" % part)
-                        parsed_chunk.append(('literal_key', integer_value))
+                        parsed_chunk += Literal(integer_value)
                     else:
-                        parsed_chunk.append(('literal_key', part))
-            index_columns.add(tuple(item[1] for item in parsed_chunk if item[0] == 'index'))
+                        parsed_chunk += Literal(part)
+            index_columns.add(tuple(item._name for item in parsed_chunk if isinstance(item, Index)))
             parsed_chunks.append(parsed_chunk)
 
-        self._parsed_chunks = parsed_chunks
+        self._parsed_chunks = Join(*parsed_chunks)
         self._index_column_names = index_columns.pop()
         if(index_columns):
             raise RuntimeError("Invalid pattern: the different pattern chunks have different index columns")
@@ -69,7 +115,7 @@ class Transformer(object):
             column_names = [column_names for _ in self._parsed_chunks]
         column_names = list(column_names)
         for chunk in self._parsed_chunks:
-            if any(item[0] == 'columns' or item[0] == 'glob' for item in chunk):
+            if any(isinstance(item, Columns) or isinstance(item, Glob) for item in chunk):
                 self._recurse_pattern(data, chunk, [], [])
             elif column_names:
                 self._recurse_pattern(data, chunk, [], [], column_names.pop(0))
@@ -77,27 +123,29 @@ class Transformer(object):
                 self._recurse_pattern(data, chunk, [], [], None)
 
     def _recurse_pattern(self, data, chunk, column_name_prefix, index_prefix, default_column_name=None):
-        if(chunk):
-            cur_item, next_chunk = chunk[0], chunk[1:]
+        if(chunk._items):
+            # would be nicer to make the 'PatternChunk' object support indexing.
+            # Easiest is subclassing collections.UserList, but that doesn't exist
+            # in python 2.
+            cur_item, next_chunk = chunk._items[0], PatternChunk(chunk._items[1:])
             try:
-                what = cur_item[0]
-                if what == 'glob':
+                if isinstance(cur_item, Glob):
                     for k, v in itemize(data):
                         self._recurse_pattern(v, next_chunk, column_name_prefix + [k], index_prefix, default_column_name)
-                elif what == 'columns':
-                    columns = cur_item[1]
+                elif isinstance(cur_item, Columns):
+                    columns = cur_item._column_names
                     if isinstance(data, (dict, list, tuple)):
                         for column in columns:
                             try:
                                 self._recurse_pattern(data[column], next_chunk, column_name_prefix + [column], index_prefix, default_column_name)
                             except (IndexError, KeyError):
                                 pass
-                elif what == 'index':
-                    index_name = cur_item[1]
+                elif isinstance(cur_item, Index):
+                    index_name = cur_item._name
                     for k, v in itemize(data):
                         self._recurse_pattern(v, next_chunk, column_name_prefix, index_prefix + [k], default_column_name)
-                elif what == 'literal_key':
-                    key_name = cur_item[1]
+                elif isinstance(cur_item, Literal):
+                    key_name = cur_item._key
                     if isinstance(data, (dict, list, tuple)):
                         try:
                             self._recurse_pattern(data[key_name], next_chunk, column_name_prefix, index_prefix, default_column_name)
