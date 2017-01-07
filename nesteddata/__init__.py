@@ -88,7 +88,7 @@ def parse_pattern(pattern_definition):
 
     return Join(*parsed_chunks)
 
-def itemize(data):
+def _itemize(data):
     if hasattr(data, 'items'):
         return data.items()
     elif isinstance(data, (tuple, list)):
@@ -144,7 +144,7 @@ class Transformer(object):
             cur_item, next_chunk = chunk._items[0], PatternChunk(chunk._items[1:])
             try:
                 if isinstance(cur_item, Glob):
-                    for k, v in itemize(data):
+                    for k, v in _itemize(data):
                         self._recurse_pattern(v, next_chunk, column_name_prefix + [k], index_prefix, default_column_name)
                 elif isinstance(cur_item, Columns):
                     columns = cur_item._column_names
@@ -156,7 +156,7 @@ class Transformer(object):
                                 pass
                 elif isinstance(cur_item, Index):
                     index_name = cur_item._name
-                    for k, v in itemize(data):
+                    for k, v in _itemize(data):
                         self._recurse_pattern(v, next_chunk, column_name_prefix, index_prefix + [k], default_column_name)
                 elif isinstance(cur_item, Literal):
                     key_name = cur_item._key
