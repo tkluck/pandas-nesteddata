@@ -92,16 +92,22 @@ pattern
 can also be represented as
 
     >>> from nesteddata import Glob, Index
-    >>> Glob() + Index('key')
+    >>> pattern = Glob() + Index('key')
+    >>> pattern
     Glob() + Index('key')
+    >>> pattern.to_dataframe(data)
+         0  1
+    key      
+    a    1  3
+    b    2  4
 
 The constructor functions are:
 
-- `Index(name)`
-- `Glob()`
-- `Columns(*column_names)`
-- `Literal(key)`
-- `Join(*chunks)`
+- `Index(name)` (correponds to `<name>`)
+- `Glob()` (corresponds to `*`)
+- `Columns(*column_names)` (corresponds to `{column_name_1,..,column_name_n}`)
+- `Literal(key)` (correponds to a literal string key or a `[<number>]` integer key)
+- `Join(*chunks)` (corresponds to space-separated pattern chunks)
 
 
 INSTALLATION
