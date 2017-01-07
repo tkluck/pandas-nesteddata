@@ -55,9 +55,11 @@ The dot-separated components represent the following:
 - `{column_name}` or `{column_name_1,column_name_2,...}` is similar to `*`, but
   instead of capturing all the keys at that level of the hierarchy, it only
   captures the named columns.
+- `[<number>]` represents a numerical literal key, for indexing arrays or
+  dictionaries with keys of type `int`.
 - anything else represents a literal key name.
 - If your pattern does not contain `*` or `{...}`, you need to pass an
-  additional `column_name =>` parameter to the constructor to specify the name
+  additional `column_name=` parameter to `to_dataframe` to specify the name
   for the single column where the value will go.
 
 For the purposes of this description, an array should be seen as a collection
